@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de posts para redes sociales con IA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f3;
+      color: #1a1a18;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid #e5e5e2;
+    }
+
+    h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #888; margin-bottom: 1.5rem; }
+
+    label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fafafa;
+      color: #1a1a18;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: #3b82f6;
+      background: #fff;
+    }
+
+    textarea { min-height: 90px; resize: vertical; }
+
+    .field { margin-bottom: 1rem; }
+    .divider { border: none; border-top: 1px solid #eee; margin: 1.25rem 0; }
+
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+      cursor: pointer;
+      background: #fff;
+      color: #666;
+      transition: all 0.15s;
+    }
+    .pill.active { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
+    .pill:hover:not(.active) { background: #f5f5f3; }
+
+    .section-label { font-size: 13px; color: #666; margin: 1rem 0 6px; display: block; }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .result {
+      margin-top: 1.5rem;
+      background: #f8faff;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: none;
+    }
+
+    .result-label {
+      font-size: 12px;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .result-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1a1a18;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .result-footer { display: flex; align-items: center; justify-content: space-between; }
+
+    .copy-btn {
+      font-size: 13px;
+      color: #2563eb;
+      background: none;
+      border: 1px solid #93c5fd;
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: #eff6ff; }
+
+    .char-count { font-size: 12px; color: #aaa; }
+    .char-count.warn { color: #f59e0b; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #ffffff44;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Crea posts para redes sociales con IA</h1>
+    <p class="subtitle">Describe el tema y genera el post listo para publicar.</p>
+
+    <div class="field">
+      <label for="business">Nombre del negocio (opcional)</label>
+      <input type="text" id="business" placeholder="Ej: Cafetería El Rincón">
+    </div>
+
+    <div class="field">
+      <label for="topic">¿Sobre qué quieres publicar?</label>
+      <textarea id="topic" placeholder="Ej: Hoy abrimos nuestra nueva terraza de verano, con descuentos del 20% en bebidas toda la semana"></textarea>
+    </div>
+
+    <hr class="divider">
+
+    <span class="section-label">Red social</span>
+    <div class="pills" id="network-row">
+      <button class="pill active" data-val="Instagram" data-limit="2200">📸 Instagram</button>
+      <button class="pill" data-val="LinkedIn" data-limit="3000">💼 LinkedIn</button>
+      <button class="pill" data-val="Twitter/X" data-limit="280">🐦 Twitter/X</button>
+      <button class="pill" data-val="Facebook" data-limit="500">👥 Facebook</button>
+    </div>
+
+    <span class="section-label">Objetivo del post</span>
+    <div class="pills" id="goal-row">
+      <button class="pill active" data-val="generar engagement y comentarios">Engagement</button>
+      <button class="pill" data-val="promocionar una oferta o producto">Promoción</button>
+      <button class="pill" data-val="informar sobre una novedad">Novedad</button>
+      <button class="pill" data-val="conectar emocionalmente con la audiencia">Emocional</button>
+    </div>
+
+    <span class="section-label">Tono</span>
+    <div class="pills" id="tone-row">
+      <button class="pill active" data-val="cercano y natural">Cercano</button>
+      <button class="pill" data-val="profesional">Profesional</button>
+      <button class="pill" data-val="divertido y desenfadado">Divertido</button>
+    </div>
+
+    <button class="btn" id="gen-btn" onclick="generate()">✨ Generar post</button>
+
+    <div class="result" id="result-box">
+      <p class="result-label" id="res-lbl">Post generado</p>
+      <p class="result-text" id="result-text"></p>
+      <div class="result-footer">
+        <button class="copy-btn" onclick="copyText()">📋 Copiar</button>
+        <span class="char-count" id="char-count"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let network = 'Instagram';
+    let networkLimit = 2200;
+    let goal = 'generar engagement y comentarios';
+    let tone = 'cercano y natural';
+    const API_KEY = 'TU_API_KEY_AQUI';
+
+    document.getElementById('network-row').addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      document.querySelectorAll('#network-row .pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      network = pill.dataset.val;
+      networkLimit = parseInt(pill.dataset.limit);
+    });
+
+    document.getElementById('goal-row').addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      document.querySelectorAll('#goal-row .pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      goal = pill.dataset.val;
+    });
+
+    document.getElementById('tone-row').addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      document.querySelectorAll('#tone-row .pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      tone = pill.dataset.val;
+    });
+
+    async function generate() {
+      const topic = document.getElementById('topic').value.trim();
+      const business = document.getElementById('business').value.trim();
+      if (!topic) { alert('Describe el tema del post primero.'); return; }
+
+      const btn = document.getElementById('gen-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Generando...';
+      document.getElementById('result-box').style.display = 'none';
+
+      const businessCtx = business ? `El negocio se llama "${business}".` : '';
+
+      const prompt = `Eres un experto en social media. ${businessCtx}
+Crea un post para ${network} con este tema: "${topic}"
+
+Objetivo: ${goal}
+Tono: ${tone}
+Límite de caracteres: ${networkLimit}
+
+Instrucciones:
+- Adapta el formato a ${network} (hashtags en Instagram, más formal en LinkedIn, muy corto en Twitter/X)
+- Incluye emojis si encajan con el tono y la red
+- Añade hashtags relevantes al final si es Instagram o LinkedIn
+- Termina con una pregunta o llamada a la acción si el objetivo es engagement
+- No superes los ${networkLimit} caracteres
+
+Responde solo con el texto del post, sin explicaciones.`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const data = await res.json();
+        const text = data.content?.[0]?.text || 'Error al generar el post.';
+        document.getElementById('result-text').textContent = text;
+        document.getElementById('res-lbl').textContent = `Post para ${network}`;
+        const charEl = document.getElementById('char-count');
+        charEl.textContent = `${text.length} / ${networkLimit} caracteres`;
+        charEl.className = 'char-count' + (text.length > networkLimit ? ' warn' : '');
+        document.getElementById('result-box').style.display = 'block';
+      } catch (err) {
+        alert('Error de conexión. Inténtalo de nuevo.');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '✨ Generar post';
+    }
+
+    function copyText() {
+      const text = document.getElementById('result-text').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✅ Copiado';
+        setTimeout(() => { btn.textContent = '📋 Copiar'; }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
